@@ -1,6 +1,7 @@
 (ns loader.core
   (:require [clojure.java.jdbc :as sql]
             [clojure.string :as str]
+            [hikari-cp.core :refer :all]
             [clj-time.core :as t])
   (:gen-class))
 
@@ -10,6 +11,32 @@
    :subname "//localhost:1433/37NS"
    :user "webuser"
    :password "password"})
+
+(def db-spec
+  {:classname "oracle.jdbc.OracleDriver"
+   :subprotocol "oracle"
+   :subname "thin:@oradb:1521/webdb"
+   :user "webuser"
+   :password "password"})
+
+(def datasource-options  { :adapter "sqlserver"
+                          :username "webuser"
+                          :password "password"
+                          :database-name "37NS"
+                          :server-name "localhost"
+                          })
+(def datasource-options  { 
+                          :driver-class-name "oracle.jdbc.OracleDriver"
+                          :jdbc-url "jdbc:oracle:thin:@oradb:1521/webdb"
+                          :username "webuser"
+                          :password "password"
+                          })
+
+(defn create-conn []
+  (println "create connection")
+  (make-datasource datasource-options))
+
+(def db-spec {:datasource (create-conn)})
 
 (defn randSsn []
   (format "%03d%02d%04d" (rand-int 1000) (rand-int 100) (rand-int 10000)))
@@ -59,6 +86,7 @@
     {:recnum @counter 
      :fname (str/upper-case (rand-nth firstList))
      :lname (str/upper-case (rand-nth lastList))
+     :middle (chance #(str/upper-case (rand-nth firstList)) 1)
      :dob (sqldate bday) 
      :age age
      :ssn (chance #(randSsn) 1)
@@ -106,7 +134,10 @@
 
 (defn -main
   [& args]
-  (dotimes [n 500]
+  (println (java.util.Date.))
+  (dotimes [n 5]
+    (println n)
     (insertMany 1000))
-  (println "created data"))
+  (println "created data")
+  (println (java.util.Date.)))
 
